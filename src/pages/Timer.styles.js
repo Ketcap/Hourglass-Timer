@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { animated } from 'react-spring';
 import { Link as ReactLink } from 'react-router-dom';
 
@@ -49,11 +49,42 @@ export const ClockWrapper = styled.div`
   font-weight: bold;
 `;
 
-export const Sand = styled(animated.div)`
+const upperSand = ({ percentage }) => keyframes`
+  from {
+    transform: scaleY(${percentage});
+  }
+  to { 
+    transform: scaleY(0);
+  }
+`;
+
+const lowerSand = ({ percentage }) => keyframes`
+  from { 
+    transform: scaleY(${percentage});
+  }
+  to { 
+    transform: slaceY(1);
+}
+`;
+
+export const Sand = styled(animated.div).withConfig({
+  shouldForwardProp: (prop) => !['isUpper'].includes(prop),
+})`
   background-color: #1a1bff;
   position: absolute;
   width: 100%;
   height: 100%;
+
+  ${({ isUpper, duration }) =>
+    isUpper
+      ? css`
+          transform-origin: center bottom;
+          animation: ${upperSand} ${duration}s linear;
+        `
+      : css`
+          transform-origin: center bottom;
+          animation: ${lowerSand} ${duration}s linear;
+        `}
 `;
 
 export const Text = styled.h2`
@@ -72,7 +103,9 @@ export const Ribbon = styled.a`
   top: 0;
 `;
 
-export const Link = styled(ReactLink)`
+export const Link = styled(ReactLink).withConfig({
+  shouldForwardProp: (prop) => !['isTimer'].includes(prop),
+})`
   ${({ isTimer }) =>
     isTimer &&
     `

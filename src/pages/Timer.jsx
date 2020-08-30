@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useSpring } from 'react-spring';
 import { useParams } from 'react-router-dom';
-import { differenceInMilliseconds } from 'date-fns';
+import { differenceInSeconds } from 'date-fns';
 
 import * as S from './Timer.styles';
 
@@ -11,65 +11,59 @@ const Timer = () => {
   const { min = '', time = '' } = useParams();
   const [timer, setTimer] = useState(0);
   const [isTimeup, setIsTimeUp] = useState(false);
+  const [isTimerStarted, setIsTimerStarted] = useState(true);
 
-  // timer is in miliseconds
+  const endDate = useMemo(() => {
+    const [day, month, year, hour, minute, sec] = time.split(':');
+    if (hour && minute && sec) return new Date(year, month, day, hour, minute, sec);
+    const date = new Date();
+    date.setHours(day);
+    date.setMinutes(month);
+    date.setSeconds(year);
+    return date;
+  }, [time]);
+
+  // timer is in seconds
   const formatLeftTime = useCallback((timer) => {
-    const mins = Math.floor(timer / 60000);
-    const seconds = ((timer % 60000) / 1000).toFixed(0);
-    return `${mins}:${seconds < 10 ? `0${seconds}` : seconds}`;
+    const hours = Math.floor(timer / 3600);
+    const mins = Math.floor((timer - hours * 3600) / 60);
+    const seconds = timer - hours * 3600 - mins * 60;
+    return `
+    ${hours < 10 ? `0${hours}` : hours} :
+    ${mins < 10 ? `0${mins}` : mins} :
+    ${seconds < 10 ? `0${seconds}` : seconds}`;
   }, []);
 
   const diffCalculate = useCallback(() => {
     const now = new Date();
-    const endTime = new Date();
-    const [hour, minute, sec] = time.split(':');
-    endTime.setHours(hour);
-    endTime.setMinutes(minute);
-    endTime.setSeconds(sec);
+    const leftSeconds = differenceInSeconds(endDate, now);
 
-    const diffInMil = differenceInMilliseconds(endTime, now);
-    if (diffInMil <= 0) setIsTimeUp(true);
-    return diffInMil;
-  }, [time]);
+    if (leftSeconds <= 0) setIsTimeUp(true);
+    return leftSeconds;
+  }, [endDate]);
 
   const [duration, percentage] = useMemo(() => {
-    const diffInMil = diffCalculate();
-
-    const diffMinutes = Math.floor(diffInMil / 60000);
-
-    const currPercentage = (diffMinutes / min) * 100;
-
-    return [diffInMil, currPercentage];
-  }, [min, diffCalculate]);
+    const leftSeconds = diffCalculate();
+    const diffMinutes = leftSeconds / 60;
+    const percentage = diffMinutes / min;
+    return [leftSeconds, percentage];
+  }, [diffCalculate, min]);
 
   useEffect(() => {
     setTimer(duration);
   }, [duration]);
 
   useEffect(() => {
-    setInterval(() => {
+    const interval = setInterval(() => {
       const diff = diffCalculate();
       setTimer(diff);
-    }, 100);
-  }, [setTimer, diffCalculate]);
 
-  const upperSand = useSpring({
-    from: { top: `${100 - percentage}%` },
-    to: { top: '100%' },
-    config: {
-      duration,
-    },
-  });
+      if (diff > min * 1000) setIsTimerStarted(false);
+      if (diff <= 0) clearInterval(interval);
+    }, 500);
+  }, [setTimer, diffCalculate, min, isTimerStarted]);
 
-  const lowerSand = useSpring({
-    from: { top: `${percentage}%` },
-    to: { top: `0%` },
-    config: {
-      duration,
-    },
-  });
-
-  if (isTimeup) {
+  if (isTimeup || !isTimerStarted) {
     return (
       <S.Wrapper>
         <S.Ribbon href={GITHUB_LINK} target="_blank" rel="noopener noreferrer">
@@ -81,7 +75,7 @@ const Timer = () => {
             alt="Fork me on GitHub"
           />
         </S.Ribbon>
-        <S.Text>Time is up</S.Text>
+        <S.Text>{!isTimerStarted ? 'Timer has not been started' : `Time is up`}</S.Text>
         <S.Logo src="/img/ooo.png" />
         <S.Text>Thank you for using it.</S.Text>
         <a href="https://github.com/Ketcap" target="_blank" rel="noopener noreferrer">
@@ -101,10 +95,10 @@ const Timer = () => {
       </S.Link>
       <S.ClockWrapper>{formatLeftTime(timer)}</S.ClockWrapper>
       <S.HourGlassPart>
-        <S.Sand style={upperSand} />
+        <S.Sand isUpper duration={duration} percentage={percentage} />
       </S.HourGlassPart>
       <S.HourGlassPart>
-        <S.Sand style={lowerSand} />
+        <S.Sand duration={duration} percentage={1 - percentage} />
       </S.HourGlassPart>
     </S.Wrapper>
   );

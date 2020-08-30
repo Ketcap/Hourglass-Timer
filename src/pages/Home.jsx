@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
-import { add } from 'date-fns';
+import { add, isSameDay } from 'date-fns';
 import { Link } from 'react-router-dom';
 
 import * as S from './Home.styles';
@@ -18,7 +18,8 @@ const MINUTES = [
 
 const Home = () => {
   const { min } = useParams();
-  const { replace } = useHistory();
+  const { replace, push } = useHistory();
+  const [customMin, setCustomMin] = useState('');
 
   useEffect(() => {
     if (min) {
@@ -27,9 +28,29 @@ const Home = () => {
       const mins = future.getMinutes();
       const hours = future.getHours();
       const seconds = future.getSeconds();
-      replace(`/${min}/${hours}:${mins}:${seconds}`);
+      if (isSameDay(date, future)) {
+        replace(`/${min}/${hours}:${mins}:${seconds}`);
+      }
+      const day = future.getDate();
+      const month = future.getMonth();
+      const year = future.getFullYear();
+      replace(`/${min}/${day}:${month}:${year}:${hours}:${mins}:${seconds}`);
     }
   }, [min, replace]);
+
+  const onInputChange = useCallback((event) => {
+    const { value } = event.currentTarget;
+    const min = parseInt(value, 10);
+    if (!isNaN(min) || value === '') {
+      setCustomMin(value === '' ? value : min);
+    }
+  }, []);
+
+  const customTimer = useCallback(() => {
+    const minutes = parseInt(customMin, 10);
+    if (isNaN(minutes)) return;
+    push(`/${minutes}`);
+  }, [customMin, push]);
 
   return (
     <S.Wrapper>
@@ -41,6 +62,10 @@ const Home = () => {
           </S.TimerButton>
         ))}
       </S.TimerWrapper>
+      <S.InputWrapper>
+        <S.Input placeholder="Custom Minute" value={customMin} onChange={onInputChange} />
+        <S.Button onClick={customTimer}>Time It</S.Button>
+      </S.InputWrapper>
     </S.Wrapper>
   );
 };
