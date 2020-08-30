@@ -30,11 +30,12 @@ const Home = () => {
       const seconds = future.getSeconds();
       if (isSameDay(date, future)) {
         replace(`/${min}/${hours}:${mins}:${seconds}`);
+      } else {
+        const day = future.getDate();
+        const month = future.getMonth();
+        const year = future.getFullYear();
+        replace(`/${min}/${day}:${month}:${year}:${hours}:${mins}:${seconds}`);
       }
-      const day = future.getDate();
-      const month = future.getMonth();
-      const year = future.getFullYear();
-      replace(`/${min}/${day}:${month}:${year}:${hours}:${mins}:${seconds}`);
     }
   }, [min, replace]);
 

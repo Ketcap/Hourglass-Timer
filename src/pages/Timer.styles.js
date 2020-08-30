@@ -1,5 +1,4 @@
 import styled, { keyframes, css } from 'styled-components';
-import { animated } from 'react-spring';
 import { Link as ReactLink } from 'react-router-dom';
 
 export const BORDER_WIDTH = '0.5em';
@@ -67,7 +66,7 @@ const lowerSand = ({ percentage }) => keyframes`
 }
 `;
 
-export const Sand = styled(animated.div).withConfig({
+export const Sand = styled.div.withConfig({
   shouldForwardProp: (prop) => !['isUpper'].includes(prop),
 })`
   background-color: #1a1bff;
