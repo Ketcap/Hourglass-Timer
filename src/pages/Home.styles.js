@@ -11,6 +11,9 @@ export const Wrapper = styled.section`
 export const TimerWrapper = styled.div`
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   margin: 24px;
 `;
 

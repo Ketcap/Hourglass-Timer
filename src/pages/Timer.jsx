@@ -2,6 +2,8 @@ import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { differenceInSeconds } from 'date-fns';
 
+import Navbar from '../components/navbar';
+
 import * as S from './Timer.styles';
 
 const GITHUB_LINK = 'https://github.com/oakslab/Timer';
@@ -11,6 +13,7 @@ const Timer = () => {
   const [timer, setTimer] = useState(0);
   const [isTimeup, setIsTimeUp] = useState(false);
   const [isTimerStarted, setIsTimerStarted] = useState(true);
+  const [notification, setNotification] = useState('');
 
   const endDate = useMemo(() => {
     const [day, month, year, hour, minute, sec] = time.split(':');
@@ -38,6 +41,7 @@ const Timer = () => {
     const leftSeconds = differenceInSeconds(endDate, now);
 
     if (leftSeconds <= 0) setIsTimeUp(true);
+
     return leftSeconds;
   }, [endDate]);
 
@@ -61,6 +65,15 @@ const Timer = () => {
       if (diff <= 0) clearInterval(interval);
     }, 500);
   }, [setTimer, diffCalculate, min, isTimerStarted]);
+
+  useEffect(() => {
+    if (isTimeup && notification) {
+      const audio = new Audio(require(`../sounds/Notification-${notification}.mp3`));
+      audio.oncanplaythrough = () => {
+        audio.play();
+      };
+    }
+  }, [isTimeup, notification]);
 
   if (isTimeup || !isTimerStarted) {
     return (
@@ -89,9 +102,10 @@ const Timer = () => {
 
   return (
     <S.Wrapper>
-      <S.Link to="/" isTimer>
-        <S.Text> {`<`} </S.Text>
-      </S.Link>
+      <Navbar
+        notification={notification}
+        setNotification={(e) => setNotification(e.target.value)}
+      />
       <S.ClockWrapper>{formatLeftTime(timer)}</S.ClockWrapper>
       <S.HourGlassPart>
         <S.Sand isUpper duration={duration} percentage={percentage} />
